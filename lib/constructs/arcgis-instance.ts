@@ -62,22 +62,30 @@ export class ArcgisInstance extends Construct {
       userData.addCommands(...props.extraUserData);
     }
 
-    // Create an explicit launch template with IMDSv2 required.
-    // This avoids the naming collision issue from auto-generated templates.
-    const launchTemplate = new ec2.LaunchTemplate(this, 'LaunchTemplate', {
-      machineImage,
-      requireImdsv2: true,
-      blockDevices: [
-        {
-          deviceName: '/dev/sda1',
-          volume: ec2.BlockDeviceVolume.ebs(props.rootVolumeGib ?? 100, {
-            volumeType: ec2.EbsDeviceVolumeType.GP3,
-            encrypted: true,
-            kmsKey: props.kmsKey,
-            deleteOnTermination: props.preserveRootVolume ? false : true,
-          }),
+    // Create an explicit launch template with IMDSv2 and storage configuration.
+    // Using CfnLaunchTemplate for full control to avoid naming collisions.
+    const lt = new ec2.CfnLaunchTemplate(this, 'LaunchTemplate', {
+      launchTemplateData: {
+        imageId: machineImage.getImage(this).imageId,
+        instanceType: props.instanceType.toString(),
+        keyName: props.keyPair?.keyPairName,
+        metadataOptions: {
+          httpTokens: 'required',
+          httpPutResponseHopLimit: 1,
         },
-      ],
+        blockDeviceMappings: [
+          {
+            deviceName: '/dev/sda1',
+            ebs: {
+              volumeSize: props.rootVolumeGib ?? 100,
+              volumeType: 'gp3',
+              encrypted: true,
+              kmsKeyId: props.kmsKey?.keyArn,
+              deleteOnTermination: props.preserveRootVolume ? false : true,
+            },
+          },
+        ],
+      },
     });
 
     this.instance = new ec2.Instance(this, 'Instance', {
@@ -89,8 +97,8 @@ export class ArcgisInstance extends Construct {
       role: props.role,
       keyPair: props.keyPair,
       userData,
-      launchTemplate,
       detailedMonitoring: true,
+      launchTemplate: ec2.LaunchTemplate.fromLaunchTemplateId(this, 'LtRef', lt.ref),
     });
 
     Tags.of(this.instance).add('Name', props.nameTag);
