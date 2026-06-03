@@ -62,33 +62,12 @@ export class ArcgisInstance extends Construct {
       userData.addCommands(...props.extraUserData);
     }
 
-    // Create an explicit launch template with IMDSv2 and storage configuration.
-    // Using CfnLaunchTemplate for full control to avoid naming collisions.
-    const lt = new ec2.CfnLaunchTemplate(this, 'LaunchTemplate', {
-      launchTemplateData: {
-        imageId: machineImage.getImage(this).imageId,
-        instanceType: props.instanceType.toString(),
-        keyName: props.keyPair?.keyPairName,
-        metadataOptions: {
-          httpTokens: 'required',
-          httpPutResponseHopLimit: 1,
-        },
-        blockDeviceMappings: [
-          {
-            deviceName: '/dev/sda1',
-            ebs: {
-              volumeSize: props.rootVolumeGib ?? 100,
-              volumeType: 'gp3',
-              encrypted: true,
-              kmsKeyId: props.kmsKey?.keyArn,
-              deleteOnTermination: props.preserveRootVolume ? false : true,
-            },
-          },
-        ],
-      },
-    });
-
-    this.instance = new ec2.Instance(this, 'Instance', {
+    // Use a unique construct id (the env-prefixed name) for the instance: with
+    // requireImdsv2, CDK derives the IMDSv2 launch-template name from this id,
+    // and references it by name. A fixed id ("Instance") makes every launch
+    // template request the same name and collide; the env-prefixed nameTag keeps
+    // both the template and the instance's reference unique and consistent.
+    this.instance = new ec2.Instance(this, props.nameTag, {
       vpc: props.vpc,
       vpcSubnets: { subnets: [props.subnet] },
       instanceType: props.instanceType,
@@ -97,8 +76,19 @@ export class ArcgisInstance extends Construct {
       role: props.role,
       keyPair: props.keyPair,
       userData,
+      requireImdsv2: true,
       detailedMonitoring: true,
-      launchTemplate: ec2.LaunchTemplate.fromLaunchTemplateId(this, 'LtRef', lt.ref),
+      blockDevices: [
+        {
+          deviceName: '/dev/sda1', // Windows AMI root device
+          volume: ec2.BlockDeviceVolume.ebs(props.rootVolumeGib ?? 100, {
+            volumeType: ec2.EbsDeviceVolumeType.GP3,
+            encrypted: true,
+            kmsKey: props.kmsKey,
+            deleteOnTermination: props.preserveRootVolume ? false : true,
+          }),
+        },
+      ],
     });
 
     Tags.of(this.instance).add('Name', props.nameTag);
