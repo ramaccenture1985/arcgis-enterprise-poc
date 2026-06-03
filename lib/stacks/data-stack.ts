@@ -49,7 +49,7 @@ export class DataStack extends Stack {
     // --- RDS PostgreSQL (Enterprise Geodatabase) : LLD 7.3.2 ---
     this.database = new rds.DatabaseInstance(this, 'EnterpriseGeodatabase', {
       engine: rds.DatabaseInstanceEngine.postgres({
-        version: rds.PostgresEngineVersion.of('15.5', '15'),
+        version: rds.PostgresEngineVersion.of('15.18', '15'),
       }),
       instanceType: new ec2.InstanceType(env.database.rdsInstanceClass.replace('db.', '')),
       vpc: v.vpc,
