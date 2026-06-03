@@ -1,8 +1,23 @@
-import { Construct } from 'constructs';
-import { Tags } from 'aws-cdk-lib';
+import { Construct, IConstruct } from 'constructs';
+import { Tags, Aspects, IAspect } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as kms from 'aws-cdk-lib/aws-kms';
+
+/**
+ * `requireImdsv2: true` makes CDK create a launch template whose name is derived
+ * from the inner Instance construct id ("Instance"), so every instance requests
+ * the same physical name ("InstanceLaunchTemplate") and they collide on deploy.
+ * This aspect clears the explicit name so CloudFormation generates a unique one
+ * (also avoids "AlreadyExists" after a failed/rolled-back deploy).
+ */
+class UnnamedLaunchTemplate implements IAspect {
+  public visit(node: IConstruct): void {
+    if (node instanceof ec2.CfnLaunchTemplate) {
+      node.launchTemplateName = undefined;
+    }
+  }
+}
 
 /**
  * ArcgisInstance is a thin wrapper over ec2.Instance that applies the deployment
@@ -87,5 +102,8 @@ export class ArcgisInstance extends Construct {
     });
 
     Tags.of(this.instance).add('Name', props.nameTag);
+
+    // Ensure the IMDSv2 launch template gets a CFN-generated unique name.
+    Aspects.of(this).add(new UnnamedLaunchTemplate());
   }
 }
