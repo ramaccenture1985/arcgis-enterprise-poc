@@ -11,7 +11,7 @@ import * as kms from 'aws-cdk-lib/aws-kms';
  * This aspect clears the explicit name so CloudFormation generates a unique one
  * (also avoids "AlreadyExists" after a failed/rolled-back deploy).
  */
-/*
+
 class UnnamedLaunchTemplate implements IAspect {
   public visit(node: IConstruct): void {
     if (node instanceof ec2.CfnLaunchTemplate) {
@@ -19,7 +19,6 @@ class UnnamedLaunchTemplate implements IAspect {
     }
   }
 }
-*/
 
 /**
  * ArcgisInstance is a thin wrapper over ec2.Instance that applies the deployment
