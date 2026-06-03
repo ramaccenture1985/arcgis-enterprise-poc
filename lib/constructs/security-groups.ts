@@ -48,6 +48,11 @@ export class SecurityGroups extends Construct {
         securityGroupName: `${props.envName}-${n}`,
         description: `${n} - ${props.envName} ArcGIS Enterprise`,
         allowAllOutbound: false,
+        // These groups reference each other extensively (e.g. Portal <-> Internal
+        // ALB). Inline rules would create CloudFormation circular dependencies
+        // between the SG resources, so emit every rule as a standalone
+        // SecurityGroupIngress/Egress resource instead.
+        disableInlineRules: true,
       });
     }
 
