@@ -1,0 +1,28 @@
+{
+  "name": "xyz-arcgis-enterprise-cdk",
+  "version": "0.1.0",
+  "description": "AWS CDK (TypeScript) for the XYZ Agotest Risk Platform - ArcGIS Enterprise deployment",
+  "bin": {
+    "xyz-arcgis-enterprise-cdk": "bin/app.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "synth": "cdk synth",
+    "synth:dev": "cdk synth -c env=dev",
+    "synth:prod": "cdk synth -c env=prod",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "aws-cdk": "^2.130.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.130.0",
+    "constructs": "^10.3.0"
+  }
+}
