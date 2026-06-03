@@ -92,7 +92,7 @@ export class SecurityGroups extends Construct {
     g['sg-portal'].addIngressRule(from(g['sg-bastion']), tcp(Ports.RDP), 'RDP admin');
     g['sg-portal'].addIngressRule(from(g['sg-monitor']), tcp(Ports.HTTPS), 'Monitor health checks');
     g['sg-portal'].addEgressRule(from(g['sg-alb-internal']), tcp(Ports.HTTPS), 'Federation to internal ALB');
-    g['sg-portal'].addEgressRule(from(g['sg-notebook']), tcp(Ports.NOTEBOOK_SSR), 'Portal -> Notebook SSR');
+    g['sg-portal'].addEgressRule(from(g['sg-notebook']), tcp(Ports.NOTEBOOK_SSR), 'Portal to Notebook SSR');
     g['sg-portal'].addEgressRule(from(g['sg-cs-portal']), tcp(Ports.SMB), 'Config store SMB');
     g['sg-portal'].addEgressRule(ec2.Peer.anyIpv4(), tcp(Ports.HTTPS), 'NAT egress (Esri licensing etc)');
     g['sg-portal'].addEgressRule(from(g['sg-portal']), tcp(Ports.PORTAL), 'HA sync outbound');

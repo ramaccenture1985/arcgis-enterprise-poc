@@ -85,12 +85,11 @@ export class NetworkStack extends Stack {
     });
     endpointSg.addIngressRule(ec2.Peer.ipv4('10.0.0.0/8'), ec2.Port.tcp(443), 'HTTPS from VPC workloads');
 
-    // Interface endpoints placed in the private workload subnets (Table 26).
-    const interfaceSubnetKeys = [
-      'private-portal-az-a', 'private-portal-az-b',
-      'private-services-az-a', 'private-services-az-b',
-      'private-monitoring-az-a',
-    ];
+    // Interface endpoints require at most ONE subnet per AZ. Place one ENI in
+    // each AZ (private-services az-a / az-b); private DNS makes the endpoint
+    // resolvable VPC-wide, so the other subnets (portal, monitoring, bastion,
+    // isolated-data) reach it over VPC-local routing.
+    const interfaceSubnetKeys = ['private-services-az-a', 'private-services-az-b'];
     const interfaceSubnetIds = interfaceSubnetKeys.map((k) => v.subnet(k).subnetId);
 
     const interfaceServices: Record<string, string> = {
